@@ -30,7 +30,7 @@ class PerformLogin extends AsyncTask<Object, Void, Token> {
 
     @Override
     protected void onPreExecute() {
-        this.context.EnableDisable(false);
+        context.EnableDisable(false);
     }
 
     @Override
@@ -43,8 +43,8 @@ class PerformLogin extends AsyncTask<Object, Void, Token> {
 
         try {
             token = service.doLogin(
-                new UserPass(this.context.mUsernameView.getText().toString(),
-                             this.context.mPasswordView.getText().toString())
+                new UserPass(context.mUsernameView.getText().toString(),
+                             context.mPasswordView.getText().toString())
             ).execute().body();
         } catch (IOException e) {
             e.printStackTrace();
@@ -55,10 +55,10 @@ class PerformLogin extends AsyncTask<Object, Void, Token> {
 
     @Override
     protected void onPostExecute(Token o) {
-        Intent intent = new Intent(this.context, MainActivity.class);
+        Intent intent = new Intent(context, MainActivity.class);
         intent.putExtra("token", o);
-        this.context.startActivity(intent);
-        this.context.EnableDisable(true);
+        context.startActivity(intent);
+        context.EnableDisable(true);
     }
 }
 
@@ -87,10 +87,10 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void EnableDisable(boolean isEnable) {
-        this.mProgressBar.setVisibility(isEnable ? View.INVISIBLE : View.VISIBLE);
-        this.mUsernameView.setEnabled(isEnable);
-        this.mPasswordView.setEnabled(isEnable);
-        this.mSignInButton.setEnabled(isEnable);
+        mProgressBar.setVisibility(isEnable ? View.INVISIBLE : View.VISIBLE);
+        mUsernameView.setEnabled(isEnable);
+        mPasswordView.setEnabled(isEnable);
+        mSignInButton.setEnabled(isEnable);
     }
 }
 
