@@ -1,7 +1,5 @@
 package com.gournet.app.rest;
 
-import android.support.annotation.Nullable;
-
 import com.gournet.app.model.Token;
 import com.gournet.app.model.User;
 import com.gournet.app.model.UserPass;
@@ -26,13 +24,29 @@ public interface ApiEndpointInterface {
     }
 
     interface myAvatarService {
-        @GET("api/images/{type}/avatar/{size}/")
+        @GET("/images/{type}/avatar/{size}/")
         Call<ResponseBody> getImage(@Path("type") String type,
                                     @Path("size") int size);
     }
 
+    interface homeService {
+        @GET("api/home/")
+        Call<ResponseBody> getHome();
+    }
+
+    interface myFullSizeAvatar {
+        @GET("/images/{type}/avatar/")
+        Call<ResponseBody> getImage(@Path("type") String type);
+    }
+
+    /*interface FullSizeAvatar {
+        @GET("api/images/{type}/{id}/avatar/")
+        Call<ResponseBody> getImage(@Path("type") String type,
+                                     @Path("id") int id);
+    }*/
+
     interface avatarService {
-        @GET("api/images/{type}/{id}/avatar/{size}/")
+        @GET("/images/{type}/{id}/avatar/{size}/")
         Call<ResponseBody> getImage(@Path("type") String type,
                                    @Path("id") int id,
                                    @Path("size") int size);

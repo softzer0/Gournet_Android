@@ -8,15 +8,23 @@ import java.io.Serializable;
 public class Location implements Serializable {
 
     @SerializedName("lat")
-    public Double latitude;
+    private Double latitude;
 
     @SerializedName("lng")
-    public Double longitude;
+    private Double longitude;
 
 
     public Location(double latitude,double longitude)
     {
         this.latitude=latitude;
         this.longitude=longitude;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
     }
 }

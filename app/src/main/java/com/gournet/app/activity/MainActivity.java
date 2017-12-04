@@ -1,14 +1,17 @@
 package com.gournet.app.activity;
 
 
+
+
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -17,17 +20,29 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
+import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.gournet.app.R;
-import com.gournet.app.fragment.HomeFragment;
+import com.gournet.app.fragment.EventFragment;
 import com.gournet.app.fragment.LocationFragment;
+
+
+import com.gournet.app.fragment.MapsFragment;
 import com.gournet.app.fragment.NotificationsFragment;
 import com.gournet.app.fragment.RestaurantsFragment;
+import com.gournet.app.fragment.SplitFragment;
+import com.gournet.app.fragment.dummy.DummyContent;
 import com.gournet.app.model.Token;
+import com.gournet.app.model.User;
+import com.gournet.app.other.CircleTransform;
+import com.gournet.app.other.SessionManager;
 import com.gournet.app.rest.ApiClient;
 import com.gournet.app.rest.ApiEndpointInterface;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 import okhttp3.ResponseBody;
 import retrofit2.Retrofit;
@@ -35,22 +50,23 @@ import retrofit2.Retrofit;
 
 class GetAvatar extends AsyncTask<Object, Void, Void>{
     private MainActivity context;
-    private Token token;
 
-    GetAvatar(MainActivity context, Token token) {
+
+    GetAvatar(MainActivity context ) {
         this.context = context;
-        this.token = token;
+
     }
 
     @Override
     protected Void doInBackground(Object... o) {
-        Retrofit client = ApiClient.generateWToken(token.access);
-        ApiEndpointInterface.myAvatarService service = client.create(ApiEndpointInterface.myAvatarService.class);
-        ResponseBody body = null;
-        try {
-            body = service.getImage("user", 48).execute().body();
+        Retrofit client = ApiClient.service;
+        ApiEndpointInterface.myFullSizeAvatar service = client.create(ApiEndpointInterface.myFullSizeAvatar.class);
+        ResponseBody body=null;
+
+       try {
+            body = service.getImage("user").execute().body();
         } catch (IOException e) {
-            e.printStackTrace();
+           e.printStackTrace();
         }
         byte[] bytes = new byte[0];
         if (body != null)
@@ -59,13 +75,20 @@ class GetAvatar extends AsyncTask<Object, Void, Void>{
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+          //final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        final ImageView imageView = context.navigationView.getHeaderView(0).findViewById(R.id.profileImg);
 
-        final ImageView imageView = context.navigationView.getHeaderView(0).findViewById(R.id.imageView);
+
+        final byte[] finalBytes = bytes;
         context.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                imageView.setImageBitmap(bitmap);
+                Glide.with(context).load(finalBytes)
+                        .crossFade()
+                        .thumbnail(0.5f)
+                        .bitmapTransform(new CircleTransform(context))
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .into(imageView);
             }
         });
         return null;
@@ -73,40 +96,58 @@ class GetAvatar extends AsyncTask<Object, Void, Void>{
 }
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
-
+        implements NavigationView.OnNavigationItemSelectedListener,EventFragment.OnListFragmentInteractionListener {
+     SessionManager session;
     private DrawerLayout drawer;
     private  ActionBarDrawerToggle toggle;
     public NavigationView navigationView;
+    private TextView navUsername;
+    private TextView navFullName;
+    private ImageView navProfileImg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        session=new SessionManager(MainActivity.this);
+        Toolbar toolbar =  findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
 
 
-         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+         drawer =  findViewById(R.id.drawer_layout);
         toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-         navigationView = (NavigationView) findViewById(R.id.nav_view);
+         navigationView =  findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        Bundle extras = getIntent().getExtras();
+         //HashMap<String, String> user =session.getSessionData();
 
-        Token token = (Token) extras.getSerializable("token");
+          Bundle extras = getIntent().getExtras();
+        User user = (User) extras.getSerializable("user");
+        navFullName= navigationView.getHeaderView(0).findViewById(R.id.txtFirstLastName);
+        navUsername= navigationView.getHeaderView(0).findViewById(R.id.txtUsername);
 
-        new GetAvatar(MainActivity.this, token).execute();
+           navFullName.setText(user.getUsername());
+           navUsername.setText(user.getFullName()) ;
+
+         //  navFullName.setText(user.get(SessionManager.FULL_NAME));
+          // navUsername.setText(user.get(SessionManager.USERNAME)) ;
+        new GetAvatar(MainActivity.this).execute();
+
+//            FragmentTransaction tx = getSupportFragmentManager().beginTransaction();
+//            tx.replace(R.id.frame, new MapsFragment());
+//            tx.commit();
+
     }
+
 
     @Override
     public void onBackPressed() {
-         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+         drawer = findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -126,7 +167,7 @@ public class MainActivity extends AppCompatActivity
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+          int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
@@ -145,8 +186,10 @@ public class MainActivity extends AppCompatActivity
          switch (id)
          {
              case R.id.nav_home:
-              fragment=new HomeFragment();
-              break;
+                fragment= new SplitFragment();
+                //fragment=new MapsFragment();
+                break;
+
 
              case R.id.nav_restaurants:
                  fragment=new RestaurantsFragment();
@@ -161,7 +204,7 @@ public class MainActivity extends AppCompatActivity
                  break;
 
                  default:
-                     fragment=new HomeFragment();
+                     fragment=new MapsFragment();
          }
            if(fragment!=null) {
                FragmentManager fm=getSupportFragmentManager();
@@ -169,8 +212,13 @@ public class MainActivity extends AppCompatActivity
                        ft.replace(R.id.frame,fragment);
                        ft.commit();
            }
-         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
+          drawer =  findViewById(R.id.drawer_layout);
+         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    public void onListFragmentInteraction(DummyContent.DummyItem item) {
+
     }
 }

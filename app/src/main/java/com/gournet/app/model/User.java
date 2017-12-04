@@ -9,47 +9,47 @@ public class User implements Serializable
 {
 
     @SerializedName("id")
-    int id;
+   private int id;
 
     @SerializedName("username")
-    String username;
+     private String username;
 
     @SerializedName("last_name")
-    String lastName;
+    private String lastName;
 
     @SerializedName("first_name")
-    String firstName;
+    private String firstName;
 
     @SerializedName("birthdate")
-    String birthdate;
+    private String birthdate;
 
     @SerializedName("born_ago")
-    int born;
+     private int born;
 
     @SerializedName("address")
-    String address;
+    private String address;
 
     @SerializedName("tz")
-    String timezone;
+    private String timezone;
 
     @SerializedName("language")
-    String language;
+    private String language;
 
     @SerializedName("currency")
-    String currency;
+    private String currency;
 
     @SerializedName("gender")
-    int gender;
+    private  int gender;
 
     @SerializedName("location")
-    Location location;
+    public Location location;
 
 
     User(int id,String username,String lastName,String firstName,
                 String birthdate,int born,String address,String timezone,String language,String currency,int gender)
     {
         this.id=id;
-        this.username=username;
+         this.username=username;
         this.lastName=lastName;
         this.firstName=firstName;
         this.birthdate=birthdate;
@@ -62,4 +62,44 @@ public class User implements Serializable
     }
 
 
+    public String getUsername() {
+        return username;
+    }
+
+    public Double getLatitude(){return location.getLatitude();}
+    public Double getLongitute() {return location.getLongitude();}
+
+    public String getFullName()
+    {
+        return firstName+" "+lastName;
+    }
+
+
+    public String getBirthdate() {
+        return birthdate;
+    }
+
+    public int getBorn() {
+        return born;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public String getTimezone() {
+        return timezone;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public int getGender() {
+        return gender;
+    }
 }

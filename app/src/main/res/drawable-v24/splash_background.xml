@@ -4,7 +4,7 @@
     <item android:drawable="@color/colorPrimary"/>
     <item
              android:gravity="center"
-            android:drawable="@drawable/ic_menu_camera">
+            android:drawable="@drawable/gournet_logo">
     </item>
 
 </layer-list>

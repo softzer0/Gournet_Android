@@ -1,6 +1,7 @@
 package com.gournet.app.activity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -12,7 +13,9 @@ import android.widget.ProgressBar;
 
 import com.gournet.app.R;
 import com.gournet.app.model.Token;
+import com.gournet.app.model.TokenObj;
 import com.gournet.app.model.UserPass;
+import com.gournet.app.other.SessionManager;
 import com.gournet.app.rest.ApiClient;
 import com.gournet.app.rest.ApiEndpointInterface;
 
@@ -23,7 +26,7 @@ import retrofit2.Retrofit;
 
 class PerformLogin extends AsyncTask<Object, Void, Token> {
     LoginActivity context;
-
+    SessionManager session;
     PerformLogin(LoginActivity context) {
         this.context = context;
     }
@@ -43,21 +46,28 @@ class PerformLogin extends AsyncTask<Object, Void, Token> {
 
         try {
             token = service.doLogin(
-                new UserPass(context.mUsernameView.getText().toString(),
-                             context.mPasswordView.getText().toString())
+                    new UserPass(context.mUsernameView.getText().toString(),
+                            context.mPasswordView.getText().toString())
             ).execute().body();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+        ApiClient.generateWToken(token.getAccess().getToken());
+         //  session=new SessionManager(context);
+      //  session.saveTokenToPreference(context,"GournetPref","token",token);
+
+        //session.sav
+        //   session.createLoginSession(token.getRefresh(),token.getAccess(),token.getUser().getUsername(),token.getUser().getFullName(),token.getUser().getLatitude(),token.getUser().getLongitute());
         return token;
     }
 
     @Override
-    protected void onPostExecute(Token o) {
-        Intent intent = new Intent(context, MainActivity.class);
-        intent.putExtra("token", o);
-        context.startActivity(intent);
+    protected void onPostExecute( Token o) {
+
+       Intent intent = new Intent(context, MainActivity.class);
+       intent.putExtra("user", o.getUser());
+       context.startActivity(intent);
         context.EnableDisable(true);
     }
 }
@@ -81,9 +91,11 @@ public class LoginActivity extends AppCompatActivity {
 
         mSignInButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-            new PerformLogin(LoginActivity.this).execute();
+                new PerformLogin(LoginActivity.this).execute();
             }
         });
+
+        mSignInButton.performClick();
     }
 
     public void EnableDisable(boolean isEnable) {
@@ -92,5 +104,9 @@ public class LoginActivity extends AppCompatActivity {
         mPasswordView.setEnabled(isEnable);
         mSignInButton.setEnabled(isEnable);
     }
-}
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+    }
+}
