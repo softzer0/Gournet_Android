@@ -26,6 +26,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.gournet.app.R;
 import com.gournet.app.activity.MainActivity;
@@ -39,62 +40,13 @@ import com.gournet.app.rest.ApiEndpointInterface;
 import java.io.IOException;
 
 
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 import okhttp3.ResponseBody;
 import retrofit2.Retrofit;
 
 
-class GetHome extends AsyncTask<Object, Void, Marker[]> {
-    private MapsFragment context;
 
-    GetHome(MapsFragment context) {
-        this.context = context;
-    }
-
-
-    @Override
-    protected Marker[] doInBackground(Object... objects) {
-
-        Retrofit retrofit = ApiClient.service;
-
-        ApiEndpointInterface.homeService service = retrofit.create(ApiEndpointInterface.homeService.class);
-
-        ResponseBody body=null;
-
-        try {
-            body = service.getHome().execute().body();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        JsonParser parser = new JsonParser();
-        if (body != null) {
-            JsonArray array = null;
-            try {
-                array = parser.parse(body.string()).getAsJsonArray();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            Marker[] markers = new Gson().fromJson(array.get(1).getAsJsonObject().getAsJsonArray("results"), Marker[].class);
-
-            return markers;
-        }
-
-
-        return null;
-    }
-
-    @Override
-    protected void onPostExecute(Marker[] markers) {
-        for (Marker marker : markers) {
-            context.mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(marker.getLocation().getLatitude(), marker.getLocation().getLongitude()))
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
-                    .title(marker.getTypeDisplay()+" \""+marker.getName()+"\"")
-            );
-        }
-    }
-}
 
 public class MapsFragment extends Fragment implements OnMapReadyCallback,ActivityCompat.OnRequestPermissionsResultCallback {
 
@@ -118,6 +70,23 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback,Activit
     private FusedLocationProviderClient mFusedLocationClient;
     private com.google.android.gms.maps.model.Marker marker;
 
+    private Marker[] markers = null;
+
+    public MapsFragment() {
+    }
+
+    private boolean isCalled = false;
+    private void populateMarkers() {
+        isCalled = true;
+        for (Marker marker : markers)
+            mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(marker.getLocation().getLatitude(), marker.getLocation().getLongitude()))
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
+                    .title(marker.getTypeDisplay() + " \"" + marker.getName() + "\"")
+            );
+        markers = null;
+    }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -129,7 +98,24 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback,Activit
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        new GetHome(MapsFragment.this).execute();
+        ApiClient.service.create(ApiEndpointInterface.homeService.class).getHome()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(body -> {
+                    JsonParser parser = new JsonParser();
+                    JsonElement result;
+                    if (body != null) {
+                        try {
+                            result = parser.parse(body.string());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return;
+                        }
+                    } else return;
+                    markers = new Gson().fromJson(result.getAsJsonArray().get(1).getAsJsonObject().getAsJsonArray("results"), Marker[].class);
+                    if (!isCalled) MapsFragment.this.populateMarkers();
+                });
+
         return view;
 
     }
@@ -158,6 +144,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback,Activit
 
         LatLng home = new LatLng(user.location.getLatitude(),user.location.getLongitude());
         marker = mMap.addMarker(new MarkerOptions().position(home));
+        if (!isCalled && markers != null) populateMarkers();
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(home, 15));
 
         enableMyLocation();
@@ -244,3 +231,66 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback,Activit
     }
 
 }
+
+
+
+
+
+
+
+
+
+//onCreateView call  new GetHome(MapsFragment.this).execute();
+
+//class GetHome extends AsyncTask<Object, Void, Marker[]> {
+//    private MapsFragment context;
+//
+//    GetHome(MapsFragment context) {
+//        this.context = context;
+//    }
+//
+//
+//    @Override
+//    protected Marker[] doInBackground(Object... objects) {
+//
+//        Retrofit retrofit = ApiClient.service;
+//
+//        ApiEndpointInterface.homeService service = retrofit.create(ApiEndpointInterface.homeService.class);
+//
+//        ResponseBody body=null;
+//
+//        try {
+//            body = service.getHome().execute().body();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        JsonParser parser = new JsonParser();
+//        if (body != null) {
+//            JsonArray array = null;
+//            try {
+//                array = parser.parse(body.string()).getAsJsonArray();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//
+//            Marker[] markers = new Gson().fromJson(array.get(1).getAsJsonObject().getAsJsonArray("results"), Marker[].class);
+//
+//            return markers;
+//        }
+//
+//
+//        return null;
+//    }
+//
+//    @Override
+//    protected void onPostExecute(Marker[] markers) {
+//        for (Marker marker : markers) {
+//            context.mMap.addMarker(new MarkerOptions()
+//                    .position(new LatLng(marker.getLocation().getLatitude(), marker.getLocation().getLongitude()))
+//                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
+//                    .title(marker.getTypeDisplay()+" \""+marker.getName()+"\"")
+//            );
+//        }
+//    }
+//}

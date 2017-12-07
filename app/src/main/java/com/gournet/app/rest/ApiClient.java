@@ -11,6 +11,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 
@@ -18,8 +19,9 @@ public class ApiClient {
     private final static OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder().addInterceptor(new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY));
     private final static Retrofit.Builder builder = new Retrofit.Builder()
            //.baseUrl("http://mikisoft-64231.portmap.io:64231/")
-           // .baseUrl("http://gournet.localtunnel.me")
-            .baseUrl("https://www.gournet.co/")
+              //.baseUrl("http://gournet.localtunnel.me")
+             .baseUrl("https://www.gournet.co/")
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
             .addConverterFactory(GsonConverterFactory.create());
 
     private static OkHttpClient client = clientBuilder.build();

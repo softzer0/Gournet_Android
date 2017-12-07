@@ -24,6 +24,8 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.gournet.app.R;
 import com.gournet.app.fragment.EventFragment;
 import com.gournet.app.fragment.LocationFragment;
@@ -44,56 +46,58 @@ import com.gournet.app.rest.ApiEndpointInterface;
 import java.io.IOException;
 import java.util.HashMap;
 
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 import okhttp3.ResponseBody;
 import retrofit2.Retrofit;
 
 
-class GetAvatar extends AsyncTask<Object, Void, Void>{
-    private MainActivity context;
-
-
-    GetAvatar(MainActivity context ) {
-        this.context = context;
-
-    }
-
-    @Override
-    protected Void doInBackground(Object... o) {
-        Retrofit client = ApiClient.service;
-        ApiEndpointInterface.myFullSizeAvatar service = client.create(ApiEndpointInterface.myFullSizeAvatar.class);
-        ResponseBody body=null;
-
-       try {
-            body = service.getImage("user").execute().body();
-        } catch (IOException e) {
-           e.printStackTrace();
-        }
-        byte[] bytes = new byte[0];
-        if (body != null)
-            try {
-                bytes = body.bytes();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-          //final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-        final ImageView imageView = context.navigationView.getHeaderView(0).findViewById(R.id.profileImg);
-
-
-        final byte[] finalBytes = bytes;
-        context.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Glide.with(context).load(finalBytes)
-                        .crossFade()
-                        .thumbnail(0.5f)
-                        .bitmapTransform(new CircleTransform(context))
-                        .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .into(imageView);
-            }
-        });
-        return null;
-    }
-}
+//class GetAvatar extends AsyncTask<Object, Void, Void>{
+//    private MainActivity context;
+//
+//
+//    GetAvatar(MainActivity context ) {
+//        this.context = context;
+//
+//    }
+//
+//    @Override
+//    protected Void doInBackground(Object... o) {
+//        Retrofit client = ApiClient.service;
+//        ApiEndpointInterface.myFullSizeAvatar service = client.create(ApiEndpointInterface.myFullSizeAvatar.class);
+//        ResponseBody body=null;
+//
+//       try {
+//            body = service.getImage("user").execute().body();
+//        } catch (IOException e) {
+//           e.printStackTrace();
+//        }
+//        byte[] bytes = new byte[0];
+//        if (body != null)
+//            try {
+//                bytes = body.bytes();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//          //final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+//        final ImageView imageView = context.navigationView.getHeaderView(0).findViewById(R.id.profileImg);
+//
+//
+//        final byte[] finalBytes = bytes;
+//        context.runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                Glide.with(context).load(finalBytes)
+//                        .crossFade()
+//                        .thumbnail(0.5f)
+//                        .bitmapTransform(new CircleTransform(context))
+//                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+//                        .into(imageView);
+//            }
+//        });
+//        return null;
+//    }
+//}
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,EventFragment.OnListFragmentInteractionListener {
@@ -123,7 +127,7 @@ public class MainActivity extends AppCompatActivity
 
          navigationView =  findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-
+       //  navigationView.getMenu().getItem(0).setChecked(true);
          //HashMap<String, String> user =session.getSessionData();
 
           Bundle extras = getIntent().getExtras();
@@ -136,14 +140,45 @@ public class MainActivity extends AppCompatActivity
 
          //  navFullName.setText(user.get(SessionManager.FULL_NAME));
           // navUsername.setText(user.get(SessionManager.USERNAME)) ;
-        new GetAvatar(MainActivity.this).execute();
+       // new GetAvatar(MainActivity.this).execute();
+             getAvatar();
 
-//            FragmentTransaction tx = getSupportFragmentManager().beginTransaction();
-//            tx.replace(R.id.frame, new MapsFragment());
-//            tx.commit();
+            FragmentTransaction tx = getSupportFragmentManager().beginTransaction();
+            tx.replace(R.id.frame, new SplitFragment());
+            tx.commit();
+
 
     }
 
+     public void getAvatar()
+     {
+      ApiClient.service.create(ApiEndpointInterface.myFullSizeAvatar.class).getImage("user")
+              .subscribeOn(Schedulers.io())
+             .observeOn(AndroidSchedulers.mainThread())
+             .subscribe(body -> {
+                 byte[] bytes;
+                 if (body != null) {
+                     try {
+
+                         bytes = body.bytes();
+
+                     } catch (IOException e) {
+                         e.printStackTrace();
+                         return;
+                     }
+
+                 }
+                 else return;
+                 final ImageView imageView = navigationView.getHeaderView(0).findViewById(R.id.profileImg);
+                 Glide.with(MainActivity.this).load(bytes)
+                         .crossFade()
+                         .thumbnail(0.5f)
+                         .bitmapTransform(new CircleTransform(MainActivity.this))
+                         .diskCacheStrategy(DiskCacheStrategy.ALL)
+                         .into(imageView);
+
+             });
+     }
 
     @Override
     public void onBackPressed() {
@@ -186,6 +221,9 @@ public class MainActivity extends AppCompatActivity
          switch (id)
          {
              case R.id.nav_home:
+//                 if( onNavigationItemSelected(navigationView.getMenu().getItem(0))) {
+//                    break;
+//                 }
                 fragment= new SplitFragment();
                 //fragment=new MapsFragment();
                 break;
