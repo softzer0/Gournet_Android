@@ -18,9 +18,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ApiClient {
     private final static OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder().addInterceptor(new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY));
     private final static Retrofit.Builder builder = new Retrofit.Builder()
-           //.baseUrl("http://mikisoft-64231.portmap.io:64231/")
+           .baseUrl("http://mikisoft-64231.portmap.io:64231/")
               //.baseUrl("http://gournet.localtunnel.me")
-             .baseUrl("https://www.gournet.co/")
+            // .baseUrl("https://www.gournet.co/")
             .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
             .addConverterFactory(GsonConverterFactory.create());
 

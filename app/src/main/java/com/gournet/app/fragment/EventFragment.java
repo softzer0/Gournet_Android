@@ -3,7 +3,6 @@ package com.gournet.app.fragment;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -11,9 +10,10 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.gournet.app.R;
-import com.gournet.app.fragment.dummy.DummyContent;
-import com.gournet.app.fragment.dummy.DummyContent.DummyItem;
 
+import com.gournet.app.model.Event;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,9 +24,10 @@ import java.util.List;
  */
 public class EventFragment extends Fragment {
 
-
+    private List<Event> events=new ArrayList<>();
+    private  RecyclerView recyclerView;
     private OnListFragmentInteractionListener mListener;
-
+    private EventRecyclerViewAdapter adapter;
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -50,9 +51,9 @@ public class EventFragment extends Fragment {
         // Set the adapter
         if (view instanceof RecyclerView) {
             Context context = view.getContext();
-            RecyclerView recyclerView = (RecyclerView) view;
+                 recyclerView = (RecyclerView) view;
                 recyclerView.setLayoutManager(new LinearLayoutManager(context));
-            recyclerView.setAdapter(new EventRecyclerViewAdapter(DummyContent.ITEMS, mListener));
+
         }
         return view;
     }
@@ -75,6 +76,14 @@ public class EventFragment extends Fragment {
         mListener = null;
     }
 
+    public void setEvents(List<Event> events) {
+        this.events = events;
+        adapter=new EventRecyclerViewAdapter(this.events, mListener);
+        recyclerView.setAdapter(adapter);
+       // adapter.notifyDataSetChanged();
+       // recyclerView.invalidate();
+    }
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -87,6 +96,6 @@ public class EventFragment extends Fragment {
      */
     public interface OnListFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onListFragmentInteraction(DummyItem item);
+        void onListFragmentInteraction(Event item);
     }
 }

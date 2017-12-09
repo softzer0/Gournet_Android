@@ -5,7 +5,6 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -24,28 +23,11 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import com.gournet.app.R;
-import com.gournet.app.activity.MainActivity;
 import com.gournet.app.model.Marker;
 import com.gournet.app.model.User;
 import com.gournet.app.other.PermissionUtils;
 import com.gournet.app.other.SessionManager;
-import com.gournet.app.rest.ApiClient;
-import com.gournet.app.rest.ApiEndpointInterface;
-
-import java.io.IOException;
-
-
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.schedulers.Schedulers;
-import okhttp3.ResponseBody;
-import retrofit2.Retrofit;
-
-
 
 
 public class MapsFragment extends Fragment implements OnMapReadyCallback,ActivityCompat.OnRequestPermissionsResultCallback {
@@ -75,9 +57,10 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback,Activit
     public MapsFragment() {
     }
 
-    private boolean isCalled = false;
-    private void populateMarkers() {
-        isCalled = true;
+    private boolean isAdding = false;
+    public void populateMarkers() {
+        if (isAdding || mMap == null || markers == null) return;
+        isAdding = true;
         for (Marker marker : markers)
             mMap.addMarker(new MarkerOptions()
                     .position(new LatLng(marker.getLocation().getLatitude(), marker.getLocation().getLongitude()))
@@ -85,6 +68,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback,Activit
                     .title(marker.getTypeDisplay() + " \"" + marker.getName() + "\"")
             );
         markers = null;
+        isAdding = false;
     }
 
 
@@ -97,24 +81,6 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback,Activit
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
-        ApiClient.service.create(ApiEndpointInterface.homeService.class).getHome()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(body -> {
-                    JsonParser parser = new JsonParser();
-                    JsonElement result;
-                    if (body != null) {
-                        try {
-                            result = parser.parse(body.string());
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            return;
-                        }
-                    } else return;
-                    markers = new Gson().fromJson(result.getAsJsonArray().get(1).getAsJsonObject().getAsJsonArray("results"), Marker[].class);
-                    if (!isCalled) MapsFragment.this.populateMarkers();
-                });
 
         return view;
 
@@ -132,7 +98,6 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback,Activit
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
 
         mMap = googleMap;
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getContext());
@@ -144,7 +109,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback,Activit
 
         LatLng home = new LatLng(user.location.getLatitude(),user.location.getLongitude());
         marker = mMap.addMarker(new MarkerOptions().position(home));
-        if (!isCalled && markers != null) populateMarkers();
+        populateMarkers();
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(home, 15));
 
         enableMyLocation();
@@ -230,6 +195,9 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback,Activit
                 .newInstance(true).show(getChildFragmentManager(), "dialog");
     }
 
+    public void setMarkers(Marker[] markers) {
+        this.markers = markers;
+    }
 }
 
 

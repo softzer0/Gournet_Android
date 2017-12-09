@@ -35,7 +35,7 @@ import com.gournet.app.fragment.MapsFragment;
 import com.gournet.app.fragment.NotificationsFragment;
 import com.gournet.app.fragment.RestaurantsFragment;
 import com.gournet.app.fragment.SplitFragment;
-import com.gournet.app.fragment.dummy.DummyContent;
+import com.gournet.app.model.Event;
 import com.gournet.app.model.Token;
 import com.gournet.app.model.User;
 import com.gournet.app.other.CircleTransform;
@@ -108,6 +108,7 @@ public class MainActivity extends AppCompatActivity
     private TextView navUsername;
     private TextView navFullName;
     private ImageView navProfileImg;
+    private int currentNavigationId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,8 +128,9 @@ public class MainActivity extends AppCompatActivity
 
          navigationView =  findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-       //  navigationView.getMenu().getItem(0).setChecked(true);
-         //HashMap<String, String> user =session.getSessionData();
+
+
+        //HashMap<String, String> user =session.getSessionData();
 
           Bundle extras = getIntent().getExtras();
         User user = (User) extras.getSerializable("user");
@@ -143,10 +145,11 @@ public class MainActivity extends AppCompatActivity
        // new GetAvatar(MainActivity.this).execute();
              getAvatar();
 
-            FragmentTransaction tx = getSupportFragmentManager().beginTransaction();
+             FragmentTransaction tx = getSupportFragmentManager().beginTransaction();
             tx.replace(R.id.frame, new SplitFragment());
             tx.commit();
-
+            currentNavigationId=navigationView.getMenu().getItem(0).getItemId();
+            navigationView.setCheckedItem(R.id.nav_home);
 
     }
 
@@ -217,46 +220,48 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-        Fragment fragment=null;
-         switch (id)
-         {
-             case R.id.nav_home:
-//                 if( onNavigationItemSelected(navigationView.getMenu().getItem(0))) {
-//                    break;
-//                 }
-                fragment= new SplitFragment();
-                //fragment=new MapsFragment();
-                break;
+        if(id!=currentNavigationId) {
 
+            Fragment fragment;
+            switch (id) {
+                case R.id.nav_home:
 
-             case R.id.nav_restaurants:
-                 fragment=new RestaurantsFragment();
-                 break;
+                    fragment = new SplitFragment();
 
-             case R.id.nav_location:
-                 fragment=new LocationFragment();
-                 break;
+                    break;
 
-             case R.id.nav_notification:
-                 fragment=new NotificationsFragment();
-                 break;
+                case R.id.nav_restaurants:
+                    fragment = new RestaurantsFragment();
+                    break;
 
-                 default:
-                     fragment=new MapsFragment();
-         }
-           if(fragment!=null) {
-               FragmentManager fm=getSupportFragmentManager();
-               FragmentTransaction ft=fm.beginTransaction();
-                       ft.replace(R.id.frame,fragment);
-                       ft.commit();
-           }
+                case R.id.nav_location:
+                    fragment = new LocationFragment();
+                    break;
+
+                case R.id.nav_notification:
+                    fragment = new NotificationsFragment();
+                    break;
+
+                default:
+                    fragment = new MapsFragment();
+            }
+            if (fragment != null) {
+                FragmentManager fm = getSupportFragmentManager();
+                FragmentTransaction ft = fm.beginTransaction();
+                ft.replace(R.id.frame, fragment);
+                ft.commit();
+            }
+            currentNavigationId=id;
+        }
+
           drawer =  findViewById(R.id.drawer_layout);
          drawer.closeDrawer(GravityCompat.START);
+
         return true;
     }
 
     @Override
-    public void onListFragmentInteraction(DummyContent.DummyItem item) {
+    public void onListFragmentInteraction(Event item) {
 
     }
 }
