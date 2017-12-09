@@ -51,7 +51,7 @@ public class LoginActivity extends AppCompatActivity {
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe((result) -> {
-                            ApiClient.generateWToken(result.getAccess().getToken());
+                            ApiClient.generateWToken(result.getAccess().getToken(), getApplicationContext());
                             Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                             intent.putExtra("user", result.getUser());
                             startActivity(intent);
