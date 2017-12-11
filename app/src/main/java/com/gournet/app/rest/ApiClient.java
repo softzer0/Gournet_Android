@@ -22,13 +22,12 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 
 public class ApiClient {
+    private final static String URL = "http://mikisoft-64231.portmap.io:64231/";//"http://gournet.localtunnel.me";  //"http://mikisoft-64231.portmap.io:64231/"; // "https://www.gournet.co/"
     private final static OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder().addInterceptor(new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY));
     private final static Retrofit.Builder builder = new Retrofit.Builder()
-           .baseUrl("http://mikisoft-64231.portmap.io:64231/")
-              //.baseUrl("http://gournet.localtunnel.me")
-            // .baseUrl("https://www.gournet.co/")
-            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-            .addConverterFactory(GsonConverterFactory.create());
+           .baseUrl(URL)
+           .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+           .addConverterFactory(GsonConverterFactory.create());
 
     private static OkHttpClient client = clientBuilder.build();
     public static Retrofit service = builder.client(client).build();
@@ -36,15 +35,17 @@ public class ApiClient {
     //public static Retrofit service = builder.build();
 
     public static void generateWToken(final String token, Context context) {
-        OkHttpClient.Builder clientB;
-        clientB = clientBuilder.addInterceptor(
+        clientBuilder.addInterceptor(
                 chain -> {
                     okhttp3.Request.Builder ongoing = chain.request().newBuilder();
                     ongoing.addHeader("Authorization", "Bearer "+token);
                     return chain.proceed(ongoing.build());
                 });
-        client = clientB.build();
-        OkHttpClient imageClient = clientB.addInterceptor(
+        client = clientBuilder.build();
+        service = builder
+                .client(client)
+                .build();
+        clientBuilder.addInterceptor(
                 chain -> {
                     okhttp3.Request.Builder ongoing = chain.request().newBuilder();
                     ongoing.cacheControl(new CacheControl.Builder()
@@ -53,12 +54,12 @@ public class ApiClient {
                     );
                     return chain.proceed(ongoing.build());
                 })
-                .cache(new Cache(new File(context.getCacheDir(), "avatar"), 10 * 1024 * 1024))
+                .cache(new Cache(new File(context.getCacheDir(), "avatar"), 10 * 1024 * 1024));
+        imageService = new Retrofit.Builder().baseUrl(URL)
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(BitmapConverterFactory.create())
+                .client(clientBuilder.build())
                 .build();
-        service = builder
-                .client(client)
-                .build();
-        imageService = builder.client(imageClient).build();
     }
 
 

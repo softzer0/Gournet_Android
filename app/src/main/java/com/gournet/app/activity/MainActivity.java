@@ -6,6 +6,7 @@ package com.gournet.app.activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.LayerDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
@@ -18,12 +19,14 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.gournet.app.R;
@@ -38,7 +41,6 @@ import com.gournet.app.fragment.SplitFragment;
 import com.gournet.app.model.Event;
 import com.gournet.app.model.Token;
 import com.gournet.app.model.User;
-import com.gournet.app.other.CircleTransform;
 import com.gournet.app.other.SessionManager;
 import com.gournet.app.rest.ApiClient;
 import com.gournet.app.rest.ApiEndpointInterface;
@@ -50,6 +52,8 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.ResponseBody;
 import retrofit2.Retrofit;
+
+import static com.bumptech.glide.request.RequestOptions.circleCropTransform;
 
 
 //class GetAvatar extends AsyncTask<Object, Void, Void>{
@@ -148,6 +152,7 @@ public class MainActivity extends AppCompatActivity
              FragmentTransaction tx = getSupportFragmentManager().beginTransaction();
             tx.replace(R.id.frame, new SplitFragment());
             tx.commit();
+
             currentNavigationId=navigationView.getMenu().getItem(0).getItemId();
             navigationView.setCheckedItem(R.id.nav_home);
 
@@ -155,29 +160,14 @@ public class MainActivity extends AppCompatActivity
 
      public void getAvatar()
      {
-      ApiClient.service.create(ApiEndpointInterface.myFullSizeAvatar.class).getImage("user")
+      ApiClient.imageService.create(ApiEndpointInterface.myFullSizeAvatar.class).getImage("user")
               .subscribeOn(Schedulers.io())
              .observeOn(AndroidSchedulers.mainThread())
-             .subscribe(body -> {
-                 byte[] bytes;
-                 if (body != null) {
-                     try {
-
-                         bytes = body.bytes();
-
-                     } catch (IOException e) {
-                         e.printStackTrace();
-                         return;
-                     }
-
-                 }
-                 else return;
+             .subscribe(image -> {
                  final ImageView imageView = navigationView.getHeaderView(0).findViewById(R.id.profileImg);
-                 Glide.with(MainActivity.this).load(bytes)
-                         .crossFade()
+                 Glide.with(MainActivity.this).load(image)
                          .thumbnail(0.5f)
-                         .bitmapTransform(new CircleTransform(MainActivity.this))
-                         .diskCacheStrategy(DiskCacheStrategy.ALL)
+                         .apply(circleCropTransform())
                          .into(imageView);
 
              });
@@ -197,6 +187,9 @@ public class MainActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+        MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.action_bar_notification, menu);
+
         return true;
     }
 
